@@ -34,8 +34,24 @@ class CSPsolver:
         self.fc = ce
         # fc is a boolean that tracks whether or not to use forward checking.
 
+    def h_constrained(self):
+        '''Returns an array of tuples that get the current state of how constrained the values are.'''
+        constrained = []
+        # counts the number of possible values the number can have, and returns an array of tuples, where
+        # (constrained order, value name), where constrained order is lower-is-better
+        for variable in self.variables.keys():
+            value_count = len(self.variables[variable])
+            print(variable,variable_count)
+
+        return constrained
+
+    def h_constraining(self):
+        cosntraining = []
+
+        return constraining
+
     def solve(self):
-        pass
+        self.h_constrained()
 
 
 def parse_vars(var_file):
