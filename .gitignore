@@ -1,3 +1,6 @@
 # Testing files
-.var
-.con
+*.var
+*.con
+
+# Vim swp
+*.swp
