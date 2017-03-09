@@ -16,11 +16,26 @@ class CSPsolver:
 
     def __init__(self, var, con, ce):
         self.variables = parse_vars(var)
+        # variables is an dictionary, where
+        # key = variable name
+        # value = array of possible values
+        #
+        # for example, a key/value pair might be
+        # "B": [1,2,3,4]
+
         self.constraints = parse_con(con)
+        # constraints is an array of tuples, where
+        # the first value in a tuple is a tuple of values the constraint applies to,
+        # the second value is an anonymous function that takes two variables and returns a boolean
+        #
+        # for example, an item in the array might be
+        # (("A","B"), lambda a,b: a>b)
+
         self.fc = ce
+        # fc is a boolean that tracks whether or not to use forward checking.
 
     def solve(self):
-        print(self.variables)
+        print(self.constraints)
 
 
 def parse_vars(var_file):
@@ -50,11 +65,26 @@ def parse_vars(var_file):
     return variables
 
 def parse_con(con_file):
-    constraints = {}
+    constraints = []
 
     for constraint_line in con_file.readlines():
         constraint_line = constraint_line.strip()
 
+        con_arr = constraint_line.split(" ")
+        # split the line into the three parts
+        var1, eq, var2 = con_arr[0], con_arr[1], con_arr[2]
+
+        # construct a tuple representing the constraint and add it to the list
+        if   eq == "=":
+            constraints.append(((var1,var2), lambda a,b: a==b))
+        elif eq == "!":
+            constraints.append(((var1,var2), lambda a,b: a!=b))
+        elif eq == ">":
+            constraints.append(((var1,var2), lambda a,b: a>b))
+        elif eq == "<":
+            constraints.append(((var1,var2), lambda a,b: a<b))
+        else:
+            raise Exception("Unknown operator in constraint file.", eq)
 
     return constraints
 
