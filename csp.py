@@ -35,7 +35,7 @@ class CSPsolver:
         # fc is a boolean that tracks whether or not to use forward checking.
 
     def solve(self):
-        print(self.constraints)
+        pass
 
 
 def parse_vars(var_file):
@@ -47,6 +47,7 @@ def parse_vars(var_file):
     variables = {}
 
     for variable_line in var_file.readlines():
+        # clean up newlines
         variable_line = variable_line.strip()
 
         # split the line into variable and possible values, which are seperated by ":"
@@ -55,9 +56,10 @@ def parse_vars(var_file):
         # variable name is first instance of the array, character(s) before the ":" symbol
         variable = single_arr[0].strip()
 
-        # hande possible values
+        # add possible values to the array
         values_arr = []
         for value in single_arr[1].strip().split(" "):
+            # cast values as ints
             values_arr.append(int(value))
 
         variables[variable] = values_arr
@@ -65,9 +67,14 @@ def parse_vars(var_file):
     return variables
 
 def parse_con(con_file):
+    '''Converts the input file into an array, where each value is a tuple.
+    Each tuple has a tuple of the two values the constraint applies to,
+    and the second value is a lambda function that represents the constrant.
+    '''
     constraints = []
 
     for constraint_line in con_file.readlines():
+        # clean up newlines
         constraint_line = constraint_line.strip()
 
         con_arr = constraint_line.split(" ")
@@ -75,6 +82,7 @@ def parse_con(con_file):
         var1, eq, var2 = con_arr[0], con_arr[1], con_arr[2]
 
         # construct a tuple representing the constraint and add it to the list
+        # structure of the constraint described above
         if   eq == "=":
             constraints.append(((var1,var2), lambda a,b: a==b))
         elif eq == "!":
@@ -84,7 +92,8 @@ def parse_con(con_file):
         elif eq == "<":
             constraints.append(((var1,var2), lambda a,b: a<b))
         else:
-            raise Exception("Unknown operator in constraint file.", eq)
+            # raise an exception if the .con file has a bad constraint
+            raise Exception("Unknown operator in constraint file", eq)
 
     return constraints
 
@@ -99,6 +108,6 @@ if __name__ == "__main__":
         problem.solve()
 
     except Exception as e:
-        print(e)
+        raise e
     finally:
         pass
