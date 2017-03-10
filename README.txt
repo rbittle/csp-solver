@@ -12,7 +12,7 @@ Source Files:
 
 Platform:
     Riley: developed on Linux using Python 3.6.0
-    Daniel:
+    Daniel: developed on Windows using Python 3.6.0
 
 Instructions to run:
     python3 csp.py <var> <con> <consistency>
