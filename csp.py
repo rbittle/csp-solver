@@ -3,12 +3,11 @@
 import argparse
 import re
 
+# Command Line interface
 parser = argparse.ArgumentParser()
-
 parser.add_argument("var", action="store", help="Name of the variables file used.")
 parser.add_argument("con", action="store", help="Name of the constrains file used.")
 parser.add_argument("consistency", action="store", help="Consistency-enforcing procedure. Either fc or none.")
-
 args = parser.parse_args()
 
 
@@ -51,13 +50,13 @@ class CSPsolver:
 
         for variable in self.variables.keys():
             affects_count = 0
-            # affects_count += 1 for tup, funct in self.constraints if variable in tup
+            # count the number of constraints each variable is a part of.
             for tup, funct in self.constraints:
                 if variable in tup:
                     affects_count += 1
+
             constraining.append((affects_count, variable))
-
-
+        # order by amount of constraints on other variables
         return sorted(constraining)
 
     def solve(self):
@@ -99,22 +98,25 @@ def parse_con(con_file):
     constraints = []
 
     for constraint_line in con_file.readlines():
-        # clean up newlines
+        # clean up newline characters
         constraint_line = constraint_line.strip()
 
-        con_arr = constraint_line.split(" ")
         # split the line into the three parts
+        con_arr = constraint_line.split(" ")
         var1, eq, var2 = con_arr[0], con_arr[1], con_arr[2]
 
-        # construct a tuple representing the constraint and add it to the list
-        # structure of the constraint described above
+        # construct a tuple representing the constraint and add it to the list of constraints
         if   eq == "=":
+            # A = B
             constraints.append(((var1,var2), lambda a,b: a==b))
         elif eq == "!":
+            # A ! B
             constraints.append(((var1,var2), lambda a,b: a!=b))
         elif eq == ">":
+            # A > B
             constraints.append(((var1,var2), lambda a,b: a>b))
         elif eq == "<":
+            # A < B
             constraints.append(((var1,var2), lambda a,b: a<b))
         else:
             # raise an exception if the .con file has a bad constraint
