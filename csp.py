@@ -36,6 +36,9 @@ class CSPsolver:
         self.fc = ce
         # fc is a boolean that tracks whether or not to use forward checking.
 
+        self.checked = []
+        # list of assignment states that have already been checked.
+
     def h_constrained(self):
         '''Returns an array of tuples that get the current state of how constrained the values are.'''
         constrained = []
@@ -62,8 +65,26 @@ class CSPsolver:
         # order by amount of constraints on other variables
         return sorted(constraining)
 
+    def goal_test(self, assignments):
+        '''Tests the set assignments to see if they fit as a solution.'''
+        goal = False
+
+        return goal
+
+    def succ(self):
+        '''Returns the next successor state(s?) using the variable and value selection heuristics.'''
+        state = ()
+
+        return state
+
+    def propagate(self, assignments):
+        '''Returns a dictionary of possible new assignments given the current set of constraints using forward propagation.'''
+        values = {}
+
+        return values
+
     def solve(self):
-        print(self.variables, self.domains)
+        '''Solves the problem as described in the class' variables.'''
         pass
 
 
