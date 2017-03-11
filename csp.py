@@ -41,17 +41,27 @@ class CSPsolver:
         # (constrained order, value name), where constrained order is lower-is-better
         for variable in self.variables.keys():
             value_count = len(self.variables[variable])
-            print(variable,variable_count)
+            constrained.append((value_count, variable))
 
-        return constrained
+        return sorted(constrained)
 
     def h_constraining(self):
-        cosntraining = []
+        '''Returns an array of tuples that gets the current state of how constraining each variable is.'''
+        constraining = []
 
-        return constraining
+        for variable in self.variables.keys():
+            affects_count = 0
+            # affects_count += 1 for tup, funct in self.constraints if variable in tup
+            for tup, funct in self.constraints:
+                if variable in tup:
+                    affects_count += 1
+            constraining.append((affects_count, variable))
+
+
+        return sorted(constraining)
 
     def solve(self):
-        self.h_constrained()
+        pass
 
 
 def parse_vars(var_file):
@@ -61,7 +71,6 @@ def parse_vars(var_file):
     '''
 
     variables = {}
-
     for variable_line in var_file.readlines():
         # clean up newlines
         variable_line = variable_line.strip()
