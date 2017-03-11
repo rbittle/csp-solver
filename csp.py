@@ -14,8 +14,11 @@ args = parser.parse_args()
 class CSPsolver:
 
     def __init__(self, var, con, ce):
-        self.variables = parse_vars(var)
-        # variables is an dictionary, where
+        self.variables, self.domains = parse_vars(var)
+        # variables is an ordered tuple of variable names
+        # ex: ("A", "B", "C")
+
+        # domains is an dictionary, where
         # key = variable name
         # value = array of possible values
         #
@@ -38,8 +41,8 @@ class CSPsolver:
         constrained = []
         # counts the number of possible values the number can have, and returns an array of tuples, where
         # (constrained order, value name), where constrained order is lower-is-better
-        for variable in self.variables.keys():
-            value_count = len(self.variables[variable])
+        for variable in self.variables:
+            value_count = len(self.domains[variable])
             constrained.append((value_count, variable))
 
         return sorted(constrained)
@@ -48,7 +51,7 @@ class CSPsolver:
         '''Returns an array of tuples that gets the current state of how constraining each variable is.'''
         constraining = []
 
-        for variable in self.variables.keys():
+        for variable in self.variables:
             affects_count = 0
             # count the number of constraints each variable is a part of.
             for tup, funct in self.constraints:
@@ -60,6 +63,7 @@ class CSPsolver:
         return sorted(constraining)
 
     def solve(self):
+        print(self.variables, self.domains)
         pass
 
 
@@ -88,7 +92,7 @@ def parse_vars(var_file):
 
         variables[variable] = values_arr
 
-    return variables
+    return tuple(variables.keys()), variables
 
 def parse_con(con_file):
     '''Converts the input file into an array, where each value is a tuple.
