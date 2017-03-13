@@ -66,17 +66,6 @@ class CSPsolver:
         # order by amount of constraints on other variables
         return sorted(constraining)
 
-    def goal_test(self, assignments):
-        '''Tests the set assignments to see if they fit as a solution.'''
-        goal = False
-
-        return goal
-
-    def succ(self):
-        '''Returns the next successor state(s?) using the variable and value selection heuristics.'''
-        state = ()
-
-        return state
 
     def select_unset_variable(self, assignment):
         '''Returns the value to next search for, given the current assignment of variables, and the possible
@@ -125,7 +114,36 @@ class CSPsolver:
         return sorted(possible2)[0]
 
     def conflicts(self, assignment, trial):
-        pass
+
+        def conflict(assign1, assign2):
+            # give nice names to inputs
+            var1, val1 = assign1
+            var2, val2 = assign2
+            # iterate through all the constraints in the problem
+            for variables, funct in self.constraints:
+                # if the variables match the variables in the constraint
+                if variables[0] == var1 and variables[1] == var2:
+                    # return the result of applying that constraint to the variables
+                    # only return true if a constraint is broken, else continue to the rest of the constraints
+                    if not funct(var1, var2):
+                        return True
+
+                # variable order matters
+                elif variables[0] == var2 and variables[1] == var1:
+                    if not funct(var2, var1):
+                        return True
+
+            # if no constraints with those two variables, then there can be no conflict.
+            return False
+
+        # count the number of conflicts for each variable in the current assignment
+        conflicts_count = 0
+        for variable, value in assignment:
+            if conflict((variable,value),trial):
+                conflicts_count += 1
+
+        return conflicts_count
+
 
     def backtrack_recurse(self, assignment):
         '''Recursive component for backtrack_search.'''
@@ -150,6 +168,9 @@ class CSPsolver:
         '''Starts a backtracking search given the class' current configuration.'''
         return self.backtrack_recurse([])
 
+    def solve(self):
+        '''Start the problem search.'''
+        pass
 
 def parse_vars(var_file):
     '''Converts the input file into a dictionary, where
