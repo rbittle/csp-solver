@@ -2,6 +2,7 @@
 
 import argparse
 import re
+from queue import LifoQueue
 
 # Command Line interface
 parser = argparse.ArgumentParser()
@@ -39,22 +40,22 @@ class CSPsolver:
         self.checked = []
         # list of assignment states that have already been checked.
 
-    def h_constrained(self):
+    def h_constrained(self, variables):
         '''Returns an array of tuples that get the current state of how constrained the values are.'''
         constrained = []
         # counts the number of possible values the number can have, and returns an array of tuples, where
         # (constrained order, value name), where constrained order is lower-is-better
-        for variable in self.variables:
+        for variable in variables:
             value_count = len(self.domains[variable])
             constrained.append((value_count, variable))
 
         return sorted(constrained)
 
-    def h_constraining(self):
+    def h_constraining(self, variables):
         '''Returns an array of tuples that gets the current state of how constraining each variable is.'''
         constraining = []
 
-        for variable in self.variables:
+        for variable in variables:
             affects_count = 0
             # count the number of constraints each variable is a part of.
             for tup, funct in self.constraints:
@@ -85,7 +86,7 @@ class CSPsolver:
 
     def solve(self):
         '''Solves the problem as described in the class' variables.'''
-        pass
+        # initial set up
 
 
 def parse_vars(var_file):
