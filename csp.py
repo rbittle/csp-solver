@@ -78,15 +78,77 @@ class CSPsolver:
 
         return state
 
-    def propagate(self, assignments):
-        '''Returns a dictionary of possible new assignments given the current set of constraints using forward propagation.'''
-        values = {}
+    def select_unset_variable(self, assignment):
+        '''Returns the value to next search for, given the current assignment of variables, and the possible
+        variables assigned in the class.
+        '''
+        # get possible unset variables
+        vars_set = []
+        for variable, value in assignment:
+            vars_set.append(variable)
+        unset = [variable for variable in self.variables if variable not in vars_set]
 
-        return values
+        # to select a variable, first use the most constrained heuristic
+        possible = [] # list of possible values
+        lowest = 9999 # constrained score to test against
+        c_ed = self.h_constrained(unset) # current state of constrained values
+        for score, variable in c_ed:
+            # if most constrained so far, replace current possible variables array
+            if score < lowest:
+                possible = [variable]
+                lowest = score
+            # if tied for most constraining, add to the list
+            elif score == lowest:
+                possible.append(variable)
+        # if the list only has one variable, return that variable
+        if len(possible) == 1:
+            return possible[0]
 
-    def solve(self):
-        '''Solves the problem as described in the class' variables.'''
-        # initial set up
+        # else, sort by the most constrained heuristic
+        possible2 = []
+        highest = 0
+        c_ing = self.h_constraining(possible)
+        for score, variable in c_ing:
+            # if the variable has the most constraints so far, replace the possible variables list
+            if score > highest:
+                possible2 = [variable]
+                highest = score
+            # if tied for most constrained, add to the list
+            elif score == highest:
+                possible2.append(variable)
+
+        # if the list only has one variable, return that variable
+        if len(possible2) == 1:
+            return possible2[0]
+
+        # else, sort alphabetically
+        return sorted(possible2)[0]
+
+    def conflicts(self, assignment, trial):
+        pass
+
+    def backtrack_recurse(self, assignment):
+        '''Recursive component for backtrack_search.'''
+        # if the assignment has all variables set, then return it as a solution.
+        if len(assignment) == len(self.variables):
+            return assignment
+        # else, pick the next variable to be assigned a value
+        var = self.select_unset_variable(assignment)
+        for value in self.domains[var]:
+            # check for the conflicts given the new assignment
+            if self.conflicts(assignment, (var, value)) == []:
+                # if no assignments, recurse in that direction
+                new_assign = assignment.append((var, value))
+                result = self.backtrack_recurse(new_assign)
+                if result is not None:
+                    # back-propagate result
+                    return result
+        # Return none if no assignments found
+        return None
+
+    def backtrack_search(self):
+        '''Starts a backtracking search given the class' current configuration.'''
+        return self.backtrack_recurse([])
 
 
 def parse_vars(var_file):
