@@ -125,12 +125,13 @@ class CSPsolver:
                 if variables[0] == var1 and variables[1] == var2:
                     # return the result of applying that constraint to the variables
                     # only return true if a constraint is broken, else continue to the rest of the constraints
-                    if not funct(var1, var2):
+                    if funct(val1, val2) == False:
                         return True
 
-                # variable order matters
+                # variable order can be reversed
                 elif variables[0] == var2 and variables[1] == var1:
-                    if not funct(var2, var1):
+                    # variables arn't called in reverse (1 hour of debugging!)
+                    if not funct(val1, val2):
                         return True
 
             # if no constraints with those two variables, then there can be no conflict.
@@ -154,13 +155,18 @@ class CSPsolver:
         var = self.select_unset_variable(assignment)
         for value in self.domains[var]:
             # check for the conflicts given the new assignment
-            if self.conflicts(assignment, (var, value)) == []:
+            if self.conflicts(assignment, (var, value)) == 0:
                 # if no assignments, recurse in that direction
-                new_assign = assignment.append((var, value))
+                new_assign = assignment + [(var, value)]
+                print(new_assign,"step")
                 result = self.backtrack_recurse(new_assign)
                 if result is not None:
                     # back-propagate result
                     return result
+            else:
+                pass
+                # print(assignment + [(var,value)], "conflict")
+            # reset assignment
         # Return none if no assignments found
         return None
 
@@ -170,7 +176,8 @@ class CSPsolver:
 
     def solve(self):
         '''Start the problem search.'''
-        pass
+        solution = self.backtrack_search()
+        print(solution, "solution")
 
 def parse_vars(var_file):
     '''Converts the input file into a dictionary, where
