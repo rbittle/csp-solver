@@ -109,6 +109,9 @@ class CSPsolver:
         # if the list only has one variable, return that variable
         if len(possible2) == 1:
             return possible2[0]
+        # if the list is empty, return None
+        elif len(possible2) == 0:
+            return None
 
         # else, sort alphabetically
         return sorted(possible2)[0]
@@ -130,8 +133,7 @@ class CSPsolver:
 
                 # variable order can be reversed
                 elif variables[0] == var2 and variables[1] == var1:
-                    # variables arn't called in reverse (1 hour of debugging!)
-                    if not funct(val1, val2):
+                    if not funct(val2, val1):
                         return True
 
             # if no constraints with those two variables, then there can be no conflict.
@@ -145,6 +147,22 @@ class CSPsolver:
 
         return conflicts_count
 
+    def order_domain_values(self, assignment, variable):
+        '''Returns the domain values for a variable ordered by the least constraining value heuristic.'''
+        domain = self.domains[variable]
+
+        value_constraints = []
+        for val in domain:
+            forward_check = assignment + [(variable, val)]
+            next_var = self.select_unset_variable(forward_check)
+            if next_var is None:
+                return domain
+            total_conflicts = 0
+            for val2 in self.domains[next_var]:
+                total_conflicts += self.conflicts(forward_check, (next_var, val2))
+            value_constraints.append((total_conflicts, val))
+        sorted_domain = sorted(value_constraints, reverse=True)
+        return [val for con, val in sorted_domain]
 
     def backtrack_recurse(self, assignment):
         '''Recursive component for backtrack_search.'''
@@ -153,12 +171,12 @@ class CSPsolver:
             return assignment
         # else, pick the next variable to be assigned a value
         var = self.select_unset_variable(assignment)
-        for value in self.domains[var]:
+        for value in self.order_domain_values(assignment, var):
+        # for value in self.domains[var]:
             # check for the conflicts given the new assignment
             if self.conflicts(assignment, (var, value)) == 0:
                 # if no assignments, recurse in that direction
                 new_assign = assignment + [(var, value)]
-                print(new_assign,"step")
                 result = self.backtrack_recurse(new_assign)
                 if result is not None:
                     # back-propagate result
@@ -166,7 +184,6 @@ class CSPsolver:
             else:
                 pass
                 # print(assignment + [(var,value)], "conflict")
-            # reset assignment
         # Return none if no assignments found
         return None
 
