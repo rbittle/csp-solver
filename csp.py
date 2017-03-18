@@ -197,10 +197,13 @@ class CSPsolver:
         print(solution, "solution")
         
         # Failure is printed if the variables do not follow the constraints. Skipped over when forward checking is applied.
-        # if variable != constraint:
-        failure = self.backtrack_search()
-        print(failure, "failure")
-        
+        if variable != constraint:
+            if self.fc = false
+                failure = self.backtrack_search()
+                print(failure, "failure")
+            if self.fc = true
+                return None
+            
 def parse_vars(var_file):
     '''Converts the input file into a dictionary, where
     the key is the variable name and the value is an array
