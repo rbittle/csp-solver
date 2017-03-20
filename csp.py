@@ -15,7 +15,6 @@ args = parser.parse_args()
 class CSPsolver:
 
     def __init__(self, var, con, ce):
-        self.variables, self.domains = parse_vars(var)
         # variables is an ordered tuple of variable names
         # ex: ("A", "B", "C")
 
@@ -25,20 +24,34 @@ class CSPsolver:
         #
         # for example, a key/value pair might be
         # "B": [1,2,3,4]
+        self.variables, self.domains = parse_vars(var)
 
-        self.constraints = parse_con(con)
         # constraints is an array of tuples, where
         # the first value in a tuple is a tuple of values the constraint applies to,
         # the second value is an anonymous function that takes two variables and returns a boolean
         #
         # for example, an item in the array might be
         # (("A","B"), lambda a,b: a>b)
+        self.constraints = parse_con(con)
 
-        self.fc = ce
+        # neighbors is a dictionary, that maps a variable name to an
+        # array of variable names that it shares a constraint with.
+        # for example, a key/value pair might be
+        # "B": ["A","C"]
+        self.neighbors = {}
+        # init dictionaty
+        for variable in self.variables:
+            self.neighbors[variable] = []
+        # fill dictionary with neighbors
+        for (x, y), funct in self.constraints:
+            if y not in self.neighbors[x]:
+                self.neighbors[x].append(y)
+
         # fc is a boolean that tracks whether or not to use forward checking.
+        self.fc = ce
 
-        self.checked = []
         # list of assignment states that have already been checked.
+        self.checked = []
 
     def h_constrained(self, variables):
         '''Returns an array of tuples that get the current state of how constrained the values are.'''
@@ -116,40 +129,40 @@ class CSPsolver:
         # else, sort alphabetically
         return sorted(possible2)[0]
 
+    def conflict(self, assign1, assign2):
+        '''Check if two variable assignments conflict with the constraints.'''
+        # give nice names to inputs
+        var1, val1 = assign1
+        var2, val2 = assign2
+        # iterate through all the constraints in the problem
+        for variables, funct in self.constraints:
+            # if the variables match the variables in the constraint
+            if variables[0] == var1 and variables[1] == var2:
+                # return the result of applying that constraint to the variables
+                # only return true if a constraint is broken, else continue to the rest of the constraints
+                if funct(val1, val2) == False:
+                    return True
+
+            # variable order can be reversed
+            elif variables[0] == var2 and variables[1] == var1:
+                if not funct(val2, val1):
+                    return True
+
+        # if no constraints with those two variables, then there can be no conflict.
+        return False
+
     def conflicts(self, assignment, trial):
-
-        def conflict(assign1, assign2):
-            # give nice names to inputs
-            var1, val1 = assign1
-            var2, val2 = assign2
-            # iterate through all the constraints in the problem
-            for variables, funct in self.constraints:
-                # if the variables match the variables in the constraint
-                if variables[0] == var1 and variables[1] == var2:
-                    # return the result of applying that constraint to the variables
-                    # only return true if a constraint is broken, else continue to the rest of the constraints
-                    if funct(val1, val2) == False:
-                        return True
-
-                # variable order can be reversed
-                elif variables[0] == var2 and variables[1] == var1:
-                    if not funct(val2, val1):
-                        return True
-
-            # if no constraints with those two variables, then there can be no conflict.
-            return False
-
-        # count the number of conflicts for each variable in the current assignment
+        '''Count the number of conflicts for each variable in the current assignment.'''
         conflicts_count = 0
         for variable, value in assignment:
-            if conflict((variable,value),trial):
+            if self.conflict((variable,value),trial):
                 conflicts_count += 1
 
         return conflicts_count
 
-    def order_domain_values(self, assignment, variable):
+    def order_domain_values(self, assignment, variable, domains):
         '''Returns the domain values for a variable ordered by the least constraining value heuristic.'''
-        domain = self.domains[variable]
+        domain = domains[variable]
 
         value_constraints = []
         for val in domain:
@@ -171,8 +184,9 @@ class CSPsolver:
             return assignment
         # else, pick the next variable to be assigned a value
         var = self.select_unset_variable(assignment)
-        for value in self.order_domain_values(assignment, var):
+        # select a value to apply to the variable
         # for value in self.domains[var]:
+        for value in self.order_domain_values(assignment, var, self.domains):
             # check for the conflicts given the new assignment
             if self.conflicts(assignment, (var, value)) == 0:
                 # if no assignments, recurse in that direction
@@ -187,13 +201,70 @@ class CSPsolver:
         # Return none if no assignments found
         return None
 
+    def forward_check(self, domains, assignment, variable, value):
+        '''Applies forward checking to a set of variable domains'''
+        fc_domains = domains.copy()
+
+        # remove any N = n assignments that conflict with variable = value
+        for N in self.neighbors[variable]:
+            if N not in assignment:
+                for n in fc_domains[N]:
+                    if self.conflict((variable,value),(N,n)):
+                        fc_domains[N].remove(n)
+
+        if fc_domains != domains:
+            print("from ", domains)
+            print("to   ", fc_domains)
+        return fc_domains
+
+    def forward_check_recurse(self, assignment, domains):
+        '''recursive component for forward_check_search.'''
+        # if the assignment has all variables set, then return it as a solution.
+        if len(assignment) == len(self.variables):
+            return assignment
+
+        # pick the next variable to be assigned a value
+        var = self.select_unset_variable(assignment)
+        # select a value to apply to the variable
+        for value in self.order_domain_values(assignment, var, domains):
+
+            # check for the conflicts given the new assignment
+            if self.conflicts(assignment, (var, value)) == 0:
+                # if no assignments, recurse in that direction
+                new_assign = assignment + [(var, value)]
+                # apply forward checking to the current assignment
+                fc_domains = self.forward_check(domains, assignment, var, value)
+                for domain_var in self.variables:
+                    if fc_domains[domain_var] == []:
+                        # No possible solution given backtracking domains
+                        continue
+                result = self.forward_check_recurse(new_assign, fc_domains)
+                if result is not None:
+                    # back-propagate result
+                    return result
+            else:
+                pass
+                # print(assignment + [(var,value)], "conflict")
+
+        # Return none if no assignments found
+        return None
+
     def backtrack_search(self):
         '''Starts a backtracking search given the class' current configuration.'''
         return self.backtrack_recurse([])
 
+    def forward_check_search(self):
+        '''Start a backtracking search using forward checking.'''
+        return self.forward_check_recurse([], self.domains)
+
     def solve(self):
         '''Start the problem search.'''
-        solution = self.backtrack_search()
+
+        if self.fc:
+            solution = self.forward_check_search()
+        else:
+            solution = self.backtrack_search()
+
         print(solution, "solution")
 
 def parse_vars(var_file):
@@ -237,6 +308,8 @@ def parse_con(con_file):
         # split the line into the three parts
         con_arr = constraint_line.split(" ")
         var1, eq, var2 = con_arr[0], con_arr[1], con_arr[2]
+
+
 
         # construct a tuple representing the constraint and add it to the list of constraints
         if   eq == "=":
